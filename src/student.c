@@ -53,9 +53,11 @@ void add_student(void) {
         return;
     }
 
+    db_escape_string(escaped_roll, s.roll_number, sizeof(escaped_roll));
+
     snprintf(query, sizeof(query),
              "SELECT student_id FROM students WHERE roll_number = '%s'",
-             s.roll_number);
+             escaped_roll);
     result = db_query(query);
     if (result != NULL) {
         if (mysql_fetch_row(result) != NULL) {
@@ -79,9 +81,11 @@ void add_student(void) {
         return;
     }
 
+    db_escape_string(escaped_reg, s.registration_number, sizeof(escaped_reg));
+
     snprintf(query, sizeof(query),
              "SELECT student_id FROM students WHERE registration_number = '%s'",
-             s.registration_number);
+             escaped_reg);
     result = db_query(query);
     if (result != NULL) {
         if (mysql_fetch_row(result) != NULL) {
@@ -391,11 +395,12 @@ void delete_student(void) {
 }
 
 void search_student(void) {
+    char search_term[MAX_NAME];
+    char escaped_term[MAX_NAME * 2 + 1];
     char query[MAX_QUERY];
     MYSQL_RES *result;
     MYSQL_ROW row;
     int choice;
-    char search_term[MAX_BUFFER];
     int found = 0;
 
     print_header("SEARCH STUDENT");
@@ -412,27 +417,28 @@ void search_student(void) {
     if (choice < 1 || choice > 4) return;
 
     get_string_input("  Enter search term: ", search_term, sizeof(search_term));
+    db_escape_string(escaped_term, search_term, sizeof(escaped_term));
 
     switch (choice) {
         case 1:
             snprintf(query, sizeof(query),
                      "SELECT * FROM students WHERE roll_number LIKE '%%%s%%' ORDER BY roll_number",
-                     search_term);
+                     escaped_term);
             break;
         case 2:
             snprintf(query, sizeof(query),
                      "SELECT * FROM students WHERE registration_number LIKE '%%%s%%' ORDER BY roll_number",
-                     search_term);
+                     escaped_term);
             break;
         case 3:
             snprintf(query, sizeof(query),
                      "SELECT * FROM students WHERE full_name LIKE '%%%s%%' ORDER BY roll_number",
-                     search_term);
+                     escaped_term);
             break;
         case 4:
             snprintf(query, sizeof(query),
                      "SELECT * FROM students WHERE department LIKE '%%%s%%' ORDER BY roll_number",
-                     search_term);
+                     escaped_term);
             break;
         default:
             return;

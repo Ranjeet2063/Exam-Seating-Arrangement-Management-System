@@ -31,6 +31,7 @@ void department_menu(void) {
 
 void add_department(void) {
     char name[MAX_DEPT_NAME];
+    char escaped_name[MAX_DEPT_NAME * 2 + 1];
     char query[MAX_QUERY];
     MYSQL_RES *result;
 
@@ -46,9 +47,11 @@ void add_department(void) {
         return;
     }
 
+    db_escape_string(escaped_name, name, sizeof(escaped_name));
+
     snprintf(query, sizeof(query),
              "SELECT department_id FROM departments WHERE department_name = '%s'",
-             name);
+             escaped_name);
 
     result = db_query(query);
     if (result != NULL) {
@@ -64,7 +67,7 @@ void add_department(void) {
     }
 
     snprintf(query, sizeof(query),
-             "INSERT INTO departments (department_name) VALUES ('%s')", name);
+             "INSERT INTO departments (department_name) VALUES ('%s')", escaped_name);
 
     if (db_execute(query)) {
         set_console_color(COLOR_GREEN);
@@ -82,6 +85,7 @@ void add_department(void) {
 void update_department(void) {
     int dept_id;
     char new_name[MAX_DEPT_NAME];
+    char escaped_name[MAX_DEPT_NAME * 2 + 1];
     char query[MAX_QUERY];
     MYSQL_RES *result;
 
@@ -124,9 +128,11 @@ void update_department(void) {
         return;
     }
 
+    db_escape_string(escaped_name, new_name, sizeof(escaped_name));
+
     snprintf(query, sizeof(query),
              "UPDATE departments SET department_name = '%s' WHERE department_id = %d",
-             new_name, dept_id);
+             escaped_name, dept_id);
 
     if (db_execute(query)) {
         set_console_color(COLOR_GREEN);

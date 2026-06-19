@@ -3,6 +3,8 @@
 int login_menu(void) {
     char username[MAX_NAME];
     char password[128];
+    char escaped_username[MAX_NAME * 2 + 1];
+    char escaped_password[257];
     char query[MAX_QUERY];
     MYSQL_RES *result;
     MYSQL_ROW row;
@@ -17,10 +19,13 @@ int login_menu(void) {
         printf("  Password: ");
         get_hidden_password(password, sizeof(password));
 
+        db_escape_string(escaped_username, username, sizeof(escaped_username));
+        db_escape_string(escaped_password, password, sizeof(escaped_password));
+
         snprintf(query, sizeof(query),
                  "SELECT admin_id, username FROM admin "
                  "WHERE username = '%s' AND password = '%s'",
-                 username, password);
+                 escaped_username, escaped_password);
 
         result = db_query(query);
         if (result != NULL) {
@@ -67,6 +72,7 @@ int login_menu(void) {
 
 void forgot_password(void) {
     char username[MAX_NAME];
+    char escaped_username[MAX_NAME * 2 + 1];
     char query[MAX_QUERY];
     MYSQL_RES *result;
     MYSQL_ROW row;
@@ -74,9 +80,10 @@ void forgot_password(void) {
     print_header("FORGOT PASSWORD");
 
     get_string_input("  Enter your username: ", username, sizeof(username));
+    db_escape_string(escaped_username, username, sizeof(escaped_username));
 
     snprintf(query, sizeof(query),
-             "SELECT password FROM admin WHERE username = '%s'", username);
+             "SELECT password FROM admin WHERE username = '%s'", escaped_username);
 
     result = db_query(query);
     if (result != NULL) {
@@ -105,6 +112,8 @@ int change_password(void) {
     char old_password[128];
     char new_password[128];
     char confirm_password[128];
+    char escaped_old_password[257];
+    char escaped_new_password[257];
     char query[MAX_QUERY];
     MYSQL_RES *result;
     MYSQL_ROW row;
@@ -114,9 +123,11 @@ int change_password(void) {
     printf("  Enter current password: ");
     get_hidden_password(old_password, sizeof(old_password));
 
+    db_escape_string(escaped_old_password, old_password, sizeof(escaped_old_password));
+
     snprintf(query, sizeof(query),
              "SELECT admin_id FROM admin WHERE admin_id = %d AND password = '%s'",
-             g_admin_id, old_password);
+             g_admin_id, escaped_old_password);
 
     result = db_query(query);
     if (result == NULL) {
@@ -159,9 +170,11 @@ int change_password(void) {
         return 0;
     }
 
+    db_escape_string(escaped_new_password, new_password, sizeof(escaped_new_password));
+
     snprintf(query, sizeof(query),
              "UPDATE admin SET password = '%s' WHERE admin_id = %d",
-             new_password, g_admin_id);
+             escaped_new_password, g_admin_id);
 
     if (db_execute(query)) {
         set_console_color(COLOR_GREEN);

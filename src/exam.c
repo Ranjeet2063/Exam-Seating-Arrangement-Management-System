@@ -91,7 +91,7 @@ void create_exam(void) {
     }
 
     get_string_input("  Department: ", e.department, sizeof(e.department));
-    if (!is_valid_name(e.department) && strlen(e.department) < 2) {
+    if (strlen(e.department) < 2) {
         set_console_color(COLOR_RED);
         printf("\n  Invalid department name.\n");
         reset_console_color();

@@ -126,7 +126,7 @@ void pause_program(void) {
     set_console_color(COLOR_YELLOW);
     printf("\n  Press Enter to continue...");
     reset_console_color();
-    while (getchar() != '\n');
+    fflush(stdin);
     getchar();
 }
 

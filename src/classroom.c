@@ -66,7 +66,7 @@ void add_classroom(void) {
     }
 
     get_string_input("  Building: ", c.building, sizeof(c.building));
-    if (!is_valid_name(c.building) && strlen(c.building) < 1) {
+    if (strlen(c.building) < 1) {
         set_console_color(COLOR_RED);
         printf("\n  Invalid building name.\n");
         reset_console_color();

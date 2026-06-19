@@ -198,8 +198,6 @@ void report_student_list(void) {
         reset_console_color();
 
         if (confirm_dialog("Export to TXT file")) {
-            get_current_date_str(filename, sizeof(filename));
-            /* Use simple name */
             snprintf(filename, sizeof(filename), "exports/StudentList.txt");
 
             fp = fopen(filename, "w");

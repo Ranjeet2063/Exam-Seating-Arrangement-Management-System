@@ -12,7 +12,19 @@ USE exam_seating_system;
 -- ============================================================
 -- 1. ADMIN TABLE
 -- ============================================================
+-- ============================================================
+-- DROP TABLES IN CORRECT ORDER (seating first due to FK refs)
+-- ============================================================
+DROP TABLE IF EXISTS seating;
+DROP TABLE IF EXISTS exams;
+DROP TABLE IF EXISTS classrooms;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS departments;
 DROP TABLE IF EXISTS admin;
+
+-- ============================================================
+-- 1. ADMIN TABLE
+-- ============================================================
 CREATE TABLE admin (
     admin_id    INT AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE,
@@ -22,7 +34,6 @@ CREATE TABLE admin (
 -- ============================================================
 -- 2. DEPARTMENTS TABLE
 -- ============================================================
-DROP TABLE IF EXISTS departments;
 CREATE TABLE departments (
     department_id   INT AUTO_INCREMENT PRIMARY KEY,
     department_name VARCHAR(100) NOT NULL UNIQUE
@@ -31,7 +42,6 @@ CREATE TABLE departments (
 -- ============================================================
 -- 3. STUDENTS TABLE
 -- ============================================================
-DROP TABLE IF EXISTS students;
 CREATE TABLE students (
     student_id        INT AUTO_INCREMENT PRIMARY KEY,
     roll_number       VARCHAR(30)  NOT NULL UNIQUE,
@@ -47,7 +57,6 @@ CREATE TABLE students (
 -- ============================================================
 -- 4. CLASSROOMS TABLE
 -- ============================================================
-DROP TABLE IF EXISTS classrooms;
 CREATE TABLE classrooms (
     room_id    INT AUTO_INCREMENT PRIMARY KEY,
     room_name  VARCHAR(50) NOT NULL UNIQUE,
@@ -59,7 +68,6 @@ CREATE TABLE classrooms (
 -- ============================================================
 -- 5. EXAMS TABLE
 -- ============================================================
-DROP TABLE IF EXISTS exams;
 CREATE TABLE exams (
     exam_id     INT AUTO_INCREMENT PRIMARY KEY,
     subject     VARCHAR(100) NOT NULL,
@@ -73,7 +81,6 @@ CREATE TABLE exams (
 -- ============================================================
 -- 6. SEATING TABLE
 -- ============================================================
-DROP TABLE IF EXISTS seating;
 CREATE TABLE seating (
     seating_id   INT AUTO_INCREMENT PRIMARY KEY,
     exam_id      INT NOT NULL,
