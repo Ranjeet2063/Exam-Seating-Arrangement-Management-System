@@ -1,19 +1,43 @@
 #include "header.h"
 
+#ifdef _WIN32
 HANDLE hConsole = NULL;
+#endif
 
 void set_console_color(int color) {
+#ifdef _WIN32
     if (hConsole == NULL)
         hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, (WORD)color);
+#else
+    /* ANSI color mapping for POSIX terminals */
+    switch (color) {
+        case COLOR_RED:     printf("\033[1;31m"); break;
+        case COLOR_GREEN:   printf("\033[1;32m"); break;
+        case COLOR_YELLOW:  printf("\033[1;33m"); break;
+        case COLOR_BLUE:    printf("\033[1;34m"); break;
+        case COLOR_MAGENTA: printf("\033[1;35m"); break;
+        case COLOR_CYAN:    printf("\033[1;36m"); break;
+        case COLOR_WHITE:   printf("\033[1;37m"); break;
+        default:            printf("\033[0m"); break;
+    }
+#endif
 }
 
 void reset_console_color(void) {
+#ifdef _WIN32
     set_console_color(COLOR_RESET);
+#else
+    printf("\033[0m");
+#endif
 }
 
 void clrscr(void) {
+#ifdef _WIN32
     system("cls");
+#else
+    printf("\033[H\033[J");
+#endif
 }
 
 void show_splash_screen(void) {
@@ -251,12 +275,13 @@ void get_current_time_str(char *buffer, size_t size) {
 }
 
 int get_console_width(void) {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
     int width = 80;
-
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
         width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     }
+#endif
     if (width < 80) width = 80;
     return width;
 }

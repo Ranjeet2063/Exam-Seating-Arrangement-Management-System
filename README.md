@@ -5,20 +5,23 @@ A complete C-based console application for managing exam seating arrangements in
 ## Features
 
 - **Secure Login** with 3-attempt password protection
-- **Student Management** - Add, update, delete, search students with roll/registration numbers
+- **Student Management** - Add, update, delete, search students with roll/registration numbers, plus **Bulk CSV Import**
 - **Department Management** - Organize departments
 - **Classroom Management** - Rooms with building, floor, and capacity tracking
 - **Examination Management** - Schedule exams with date/time, link to departments
+- **Invigilator (Faculty) Management** - Add, update, delete, search faculty invigilators and assign exam duties per room with conflict checks
 - **Automatic Seating Allocation** - Algorithm assigns seats respecting:
   - Room capacity (fill Room A before Room B)
   - Sequential seat numbering
   - Anti-cheating row/column alternation
   - No duplicate student per exam
   - No duplicate seat per room
-- **View & Export Seating Plans** - On-screen and TXT file export
+- **Student Seating Lookup** - Instant search by roll or registration number
+- **View & Export Seating Plans** - On-screen, TXT export, and **CSV export**
 - **Print Seat Cards** - Individual student seat cards
-- **Comprehensive Reports** - Dashboard, attendance sheets, room occupancy, empty seats, capacity utilization
+- **Comprehensive Reports** - Dashboard, attendance sheets, room occupancy, empty seats, capacity utilization, and CSV student exports
 - **Database Backup/Restore** via mysqldump
+- **Cross-Platform C Build Support** - Preprocessor macros supporting MinGW/Windows and GCC/POSIX Linux
 - **Change Password** functionality
 
 ## Technology Stack
@@ -41,11 +44,12 @@ ExamSeatingSystem/
 │   ├── department.c    # Department management
 │   ├── classroom.c     # Classroom management
 │   ├── exam.c          # Exam scheduling
-│   ├── seating.c       # Automatic allocation algorithm
+│   ├── seating.c       # Automatic allocation algorithm & CSV export
+│   ├── invigilator.c   # Faculty CRUD & exam room duty assignment
 │   ├── report.c        # Reports and dashboard
 │   ├── database.c      # MySQL connection layer
 │   ├── validation.c    # Input validation
-│   └── utility.c       # Console UI, colors, animations
+│   └── utility.c       # Console UI, colors, animations (Cross-platform)
 ├── sql/
 │   └── exam_seating_system.sql   # Schema + sample data
 ├── exports/            # Generated TXT files

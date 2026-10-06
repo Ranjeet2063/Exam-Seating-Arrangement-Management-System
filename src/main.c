@@ -73,16 +73,17 @@ void main_menu(void) {
         printf("   3.  Department Management\n");
         printf("   4.  Classroom Management\n");
         printf("   5.  Examination Management\n");
-        printf("   6.  Automatic Seating Allocation\n");
-        printf("   7.  View Seating Arrangement\n");
-        printf("   8.  Search Student\n");
-        printf("   9.  Print Seat Card\n");
-        printf("  10. Reports\n");
-        printf("  11. Export Seating Plan\n");
-        printf("  12. Backup Database\n");
-        printf("  13. Change Password\n");
-        printf("  14. Logout\n");
-        printf("  15. Exit\n");
+        printf("   6.  Invigilator Management\n");
+        printf("   7.  Automatic Seating Allocation\n");
+        printf("   8.  View Seating Arrangement\n");
+        printf("   9.  Search Student\n");
+        printf("  10.  Print Seat Card\n");
+        printf("  11.  Reports\n");
+        printf("  12.  Export Seating Plan\n");
+        printf("  13.  Backup Database\n");
+        printf("  14.  Change Password\n");
+        printf("  15.  Logout\n");
+        printf("  16.  Exit\n");
 
         choice = get_valid_int("\n  Enter your choice: ");
 
@@ -103,30 +104,33 @@ void main_menu(void) {
                 exam_menu();
                 break;
             case 6:
-                auto_allocate_seats();
+                invigilator_menu();
                 break;
             case 7:
-                view_seating_arrangement();
+                auto_allocate_seats();
                 break;
             case 8:
-                search_student();
+                view_seating_arrangement();
                 break;
             case 9:
-                print_seat_card();
+                search_student();
                 break;
             case 10:
-                report_menu();
+                print_seat_card();
                 break;
             case 11:
-                export_seating_plan_txt();
+                report_menu();
                 break;
             case 12:
-                backup_database_menu();
+                export_seating_plan_txt();
                 break;
             case 13:
-                change_password();
+                backup_database_menu();
                 break;
             case 14:
+                change_password();
+                break;
+            case 15:
                 if (confirm_dialog("Are you sure you want to logout")) {
                     set_console_color(COLOR_GREEN);
                     printf("\n  Logged out successfully.\n");
@@ -134,14 +138,14 @@ void main_menu(void) {
                     return;
                 }
                 break;
-            case 15:
+            case 16:
                 if (confirm_dialog("Are you sure you want to exit")) {
                     return;
                 }
                 break;
             default:
                 set_console_color(COLOR_RED);
-                printf("\n  Invalid choice! Please enter 1-15.\n");
+                printf("\n  Invalid choice! Please enter 1-16.\n");
                 reset_console_color();
                 pause_program();
         }

@@ -20,8 +20,10 @@ void seating_menu(void) {
         printf("  1. Auto-Allocate Seats\n");
         printf("  2. View Seating Arrangement\n");
         printf("  3. Export Seating Plan to TXT\n");
-        printf("  4. Print Seat Card\n");
-        printf("  5. Back to Main Menu\n");
+        printf("  4. Export Seating Plan to CSV\n");
+        printf("  5. Print Seat Card\n");
+        printf("  6. Search Student Seating Lookup\n");
+        printf("  7. Back to Main Menu\n");
 
         choice = get_valid_int("\n  Enter your choice: ");
 
@@ -29,8 +31,10 @@ void seating_menu(void) {
             case 1: auto_allocate_seats(); break;
             case 2: view_seating_arrangement(); break;
             case 3: export_seating_plan_txt(); break;
-            case 4: print_seat_card(); break;
-            case 5: return;
+            case 4: export_seating_plan_csv(); break;
+            case 5: print_seat_card(); break;
+            case 6: search_student_seating(); break;
+            case 7: return;
             default:
                 set_console_color(COLOR_RED);
                 printf("\n  Invalid choice!\n");
@@ -306,6 +310,72 @@ void auto_allocate_seats(void) {
     pause_program();
 }
 
+void search_student_seating(void) {
+    char term[MAX_ROLL];
+    char escaped_term[MAX_ROLL * 2 + 1];
+    char query[MAX_QUERY];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    int count = 0;
+
+    print_header("SEARCH STUDENT SEATING");
+
+    get_string_input("  Enter Student Roll No or Reg No: ", term, sizeof(term));
+    db_escape_string(escaped_term, term, sizeof(escaped_term));
+
+    snprintf(query, sizeof(query),
+             "SELECT st.roll_number, st.full_name, e.subject, e.exam_date, "
+             "e.start_time, e.end_time, r.room_name, r.building, s.seat_number, s.row_number, s.column_number "
+             "FROM seating s "
+             "JOIN students st ON s.student_id = st.student_id "
+             "JOIN exams e ON s.exam_id = e.exam_id "
+             "JOIN classrooms r ON s.room_id = r.room_id "
+             "WHERE st.roll_number LIKE '%%%s%%' OR st.registration_number LIKE '%%%s%%' "
+             "ORDER BY e.exam_date, e.start_time",
+             escaped_term, escaped_term);
+
+    result = db_query(query);
+    if (result == NULL) {
+        set_console_color(COLOR_RED);
+        printf("\n  No seating allocation found.\n");
+        reset_console_color();
+        pause_program();
+        return;
+    }
+
+    printf("\n");
+    {
+        const char *headers[] = {"Roll No", "Student Name", "Subject", "Date", "Time", "Room", "Seat", "Row", "Col"};
+        int widths[] = {10, 22, 22, 10, 15, 10, 5, 4, 4};
+        draw_table_header(headers, widths, 9);
+    }
+
+    while ((row = mysql_fetch_row(result)) != NULL) {
+        char time_range[20];
+        snprintf(time_range, sizeof(time_range), "%s-%s", row[4], row[5]);
+        const char *cells[] = {row[0], row[1], row[2], row[3], time_range, row[6], row[8], row[9], row[10]};
+        int widths[] = {10, 22, 22, 10, 15, 10, 5, 4, 4};
+        draw_table_row(cells, widths, 9);
+        count++;
+    }
+
+    mysql_free_result(result);
+
+    if (count > 0) {
+        printf("  ");
+        print_line('-', 10 + 22 + 22 + 10 + 15 + 10 + 5 + 4 + 4 + 10);
+        set_console_color(COLOR_YELLOW);
+        printf("  Total Allocations Found: %d\n", count);
+        reset_console_color();
+    } else {
+        set_console_color(COLOR_RED);
+        printf("\n  No seating allocation found for '%s'.\n", term);
+        reset_console_color();
+    }
+
+    pause_program();
+}
+
 void view_seating_arrangement(void) {
     int exam_id;
     char query[MAX_QUERY];
@@ -570,6 +640,103 @@ void export_seating_plan_txt(void) {
     printf("\n  Seating plan exported successfully!\n");
     reset_console_color();
     printf("  File: %s\n", filename);
+
+    pause_program();
+}
+
+void export_seating_plan_csv(void) {
+    int exam_id;
+    char query[MAX_QUERY];
+    MYSQL_RES *result;
+    MYSQL_ROW row;
+    char filename[FILENAME_LEN];
+    FILE *fp;
+    char subject[MAX_SUBJECT];
+    int count = 0;
+
+    print_header("EXPORT SEATING PLAN TO CSV");
+
+    view_exam_schedule();
+
+    exam_id = get_valid_int("\n  Enter Exam ID to export: ");
+
+    snprintf(query, sizeof(query),
+             "SELECT subject FROM exams WHERE exam_id = %d", exam_id);
+
+    result = db_query(query);
+    if (result == NULL || mysql_fetch_row(result) == NULL) {
+        if (result) mysql_free_result(result);
+        set_console_color(COLOR_RED);
+        printf("\n  Exam not found!\n");
+        reset_console_color();
+        pause_program();
+        return;
+    }
+
+    row = mysql_fetch_row(result);
+    snprintf(subject, sizeof(subject), "%s", row[0]);
+    mysql_free_result(result);
+
+    /* Sanitize subject for filename */
+    {
+        char safe_subject[MAX_SUBJECT];
+        int si = 0;
+        for (int i = 0; subject[i] != '\0' && si < (int)sizeof(safe_subject) - 1; i++) {
+            char c = subject[i];
+            if (isalnum((unsigned char)c) || c == ' ' || c == '_') {
+                safe_subject[si++] = c;
+            } else {
+                safe_subject[si++] = '_';
+            }
+        }
+        safe_subject[si] = '\0';
+
+        snprintf(filename, sizeof(filename), "exports/SeatingPlan_Exam%d_%s.csv",
+                 exam_id, safe_subject);
+    }
+
+    fp = fopen(filename, "w");
+    if (fp == NULL) {
+        set_console_color(COLOR_RED);
+        printf("\n  Failed to create CSV file.\n");
+        reset_console_color();
+        pause_program();
+        return;
+    }
+
+    fprintf(fp, "Room,Building,Seat,Row,Col,Roll_Number,Student_Name,Department\n");
+
+    snprintf(query, sizeof(query),
+             "SELECT r.room_name, r.building, s.seat_number, s.row_number, s.column_number, "
+             "st.roll_number, st.full_name, st.department "
+             "FROM seating s "
+             "JOIN students st ON s.student_id = st.student_id "
+             "JOIN classrooms r ON s.room_id = r.room_id "
+             "WHERE s.exam_id = %d "
+             "ORDER BY r.room_name, s.seat_number", exam_id);
+
+    result = db_query(query);
+    if (result != NULL) {
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            fprintf(fp, "\"%s\",\"%s\",%s,%s,%s,\"%s\",\"%s\",\"%s\"\n",
+                    row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]);
+            count++;
+        }
+        mysql_free_result(result);
+    }
+
+    fclose(fp);
+
+    if (count > 0) {
+        set_console_color(COLOR_GREEN);
+        printf("\n  Seating plan exported to CSV successfully!\n");
+        reset_console_color();
+        printf("  File: %s (Total records: %d)\n", filename, count);
+    } else {
+        set_console_color(COLOR_YELLOW);
+        printf("\n  No seating allocation records exported.\n");
+        reset_console_color();
+    }
 
     pause_program();
 }

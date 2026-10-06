@@ -24,7 +24,8 @@ SOURCES = \
     $(SRCDIR)/report.c \
     $(SRCDIR)/database.c \
     $(SRCDIR)/validation.c \
-    $(SRCDIR)/utility.c
+    $(SRCDIR)/utility.c \
+    $(SRCDIR)/invigilator.c
 
 OBJECTS = $(SOURCES:.c=.o)
 TARGET = esms.exe
