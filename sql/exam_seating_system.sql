@@ -15,6 +15,8 @@ USE exam_seating_system;
 -- ============================================================
 -- DROP TABLES IN CORRECT ORDER (seating first due to FK refs)
 -- ============================================================
+DROP TABLE IF EXISTS invigilator_duties;
+DROP TABLE IF EXISTS invigilators;
 DROP TABLE IF EXISTS seating;
 DROP TABLE IF EXISTS exams;
 DROP TABLE IF EXISTS classrooms;
@@ -181,3 +183,38 @@ INSERT INTO exams (subject, exam_date, start_time, end_time, semester, departmen
 ('Digital Electronics','2026-07-11','09:00:00','12:00:00',3,'Electronics & Communication'),
 ('Thermodynamics','2026-07-12','09:00:00','12:00:00',5,'Mechanical Engineering'),
 ('Database Management Systems','2026-07-10','14:00:00','17:00:00',3,'Information Technology');
+
+-- ============================================================
+-- 7. INVIGILATORS TABLE
+-- ============================================================
+CREATE TABLE invigilators (
+    invigilator_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name      VARCHAR(100) NOT NULL,
+    department     VARCHAR(100) NOT NULL,
+    email          VARCHAR(100) NOT NULL UNIQUE,
+    phone          VARCHAR(15)  NOT NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 8. INVIGILATOR DUTIES TABLE
+-- ============================================================
+CREATE TABLE invigilator_duties (
+    duty_id        INT AUTO_INCREMENT PRIMARY KEY,
+    invigilator_id INT NOT NULL,
+    exam_id        INT NOT NULL,
+    room_id        INT NOT NULL,
+    UNIQUE KEY unique_invigilator_exam (invigilator_id, exam_id),
+    UNIQUE KEY unique_room_exam (exam_id, room_id),
+    FOREIGN KEY (invigilator_id) REFERENCES invigilators(invigilator_id) ON DELETE CASCADE,
+    FOREIGN KEY (exam_id)        REFERENCES exams(exam_id)               ON DELETE CASCADE,
+    FOREIGN KEY (room_id)        REFERENCES classrooms(room_id)          ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- SAMPLE INVIGILATORS
+-- ============================================================
+INSERT INTO invigilators (full_name, department, email, phone) VALUES
+('Dr. Ramesh Kumar', 'Computer Science & Engineering', 'ramesh.kumar@university.edu', '9811122233'),
+('Prof. Sunita Rao', 'Electronics & Communication', 'sunita.rao@university.edu', '9822233344'),
+('Dr. Alok Verma', 'Mechanical Engineering', 'alok.verma@university.edu', '9833344455'),
+('Prof. Priya Sharma', 'Information Technology', 'priya.sharma@university.edu', '9844455566');

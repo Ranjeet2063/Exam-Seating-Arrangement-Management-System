@@ -11,10 +11,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <conio.h>
+#include <ctype.h>
 #include <time.h>
-#include <windows.h>
 #include <math.h>
+
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <termios.h>
+/* POSIX stubs/types for Windows API functions */
+typedef void* HANDLE;
+typedef unsigned short WORD;
+#define STD_OUTPUT_HANDLE ((void*)(intptr_t)(-11))
+
+static inline void SetConsoleTitle(const char *title) {
+    if (title) {
+        printf("\033]0;%s\007", title);
+    }
+}
+
+static inline int _getch(void) {
+    struct termios oldt, newt;
+    int ch;
+    if (tcgetattr(STDIN_FILENO, &oldt) != 0) return getchar();
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+}
+
+static inline void Sleep(int milliseconds) {
+    usleep(milliseconds * 1000);
+}
+#endif
 
 /* ============================================================
  * DATABASE CONFIGURATION
@@ -141,6 +174,25 @@ typedef struct {
     char   exam_date[DATE_LEN];
 } Seating;
 
+typedef struct {
+    int    invigilator_id;
+    char   full_name[MAX_NAME];
+    char   department[MAX_DEPT_NAME];
+    char   email[MAX_EMAIL];
+    char   phone[MAX_PHONE];
+} Invigilator;
+
+typedef struct {
+    int    duty_id;
+    int    invigilator_id;
+    int    exam_id;
+    int    room_id;
+    char   invigilator_name[MAX_NAME];
+    char   subject[MAX_SUBJECT];
+    char   room_name[MAX_ROOM_NAME];
+    char   exam_date[DATE_LEN];
+} InvigilatorDuty;
+
 /* ============================================================
  * GLOBAL VARIABLES (declared in main.c / utility.c)
  * ============================================================ */
@@ -215,6 +267,7 @@ void update_student(void);
 void delete_student(void);
 void search_student(void);
 void view_students(void);
+void import_students_csv(void);
 
 /* ============================================================
  * DEPARTMENT MODULE
@@ -251,7 +304,21 @@ void seating_menu(void);
 void auto_allocate_seats(void);
 void view_seating_arrangement(void);
 void export_seating_plan_txt(void);
+void export_seating_plan_csv(void);
 void print_seat_card(void);
+void search_student_seating(void);
+
+/* ============================================================
+ * INVIGILATOR MODULE
+ * ============================================================ */
+void invigilator_menu(void);
+void add_invigilator(void);
+void update_invigilator(void);
+void delete_invigilator(void);
+void view_invigilators(void);
+void search_invigilator(void);
+void assign_invigilator_duty(void);
+void view_duty_roster(void);
 
 /* ============================================================
  * REPORT MODULE

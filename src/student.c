@@ -11,7 +11,8 @@ void student_menu(void) {
         printf("  3. Delete Student\n");
         printf("  4. Search Student\n");
         printf("  5. View All Students\n");
-        printf("  6. Back to Main Menu\n");
+        printf("  6. Bulk Import Students from CSV\n");
+        printf("  7. Back to Main Menu\n");
 
         choice = get_valid_int("\n  Enter your choice: ");
 
@@ -20,8 +21,9 @@ void student_menu(void) {
             case 2: update_student(); break;
             case 3: delete_student(); break;
             case 4: search_student(); break;
-            case 5: view_students(); break;
-            case 6: return;
+            case 5: view_students(); pause_program(); break;
+            case 6: import_students_csv(); break;
+            case 7: return;
             default:
                 set_console_color(COLOR_RED);
                 printf("\n  Invalid choice!\n");
@@ -530,4 +532,109 @@ void view_students(void) {
         printf("\n  No students in database.\n");
         reset_console_color();
     }
+}
+
+void import_students_csv(void) {
+    char filepath[FILENAME_LEN];
+    FILE *fp;
+    char line[MAX_BUFFER * 4];
+    int imported = 0, skipped = 0, line_num = 0;
+
+    print_header("BULK IMPORT STUDENTS FROM CSV");
+
+    printf("  Expected CSV format:\n");
+    printf("  roll_number,registration_number,full_name,department,semester,year,phone,email\n\n");
+
+    get_string_input("  Enter CSV File Path: ", filepath, sizeof(filepath));
+
+    fp = fopen(filepath, "r");
+    if (fp == NULL) {
+        set_console_color(COLOR_RED);
+        printf("\n  Cannot open file: %s\n", filepath);
+        reset_console_color();
+        pause_program();
+        return;
+    }
+
+    show_loading_animation("Reading and importing CSV data", 1000);
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        line_num++;
+        trim_newline(line);
+        if (strlen(line) == 0) continue;
+
+        /* Skip header if present */
+        if (line_num == 1 && strstr(line, "roll_number") != NULL) continue;
+
+        char roll[MAX_ROLL] = "", reg[MAX_REG] = "", name[MAX_NAME] = "";
+        char dept[MAX_DEPT_NAME] = "", phone[MAX_PHONE] = "", email[MAX_EMAIL] = "";
+        int sem = 0, yr = 0;
+
+        /* Tokenize line by comma */
+        char *token = strtok(line, ",");
+        if (token) snprintf(roll, sizeof(roll), "%s", token);
+
+        token = strtok(NULL, ",");
+        if (token) snprintf(reg, sizeof(reg), "%s", token);
+
+        token = strtok(NULL, ",");
+        if (token) snprintf(name, sizeof(name), "%s", token);
+
+        token = strtok(NULL, ",");
+        if (token) snprintf(dept, sizeof(dept), "%s", token);
+
+        token = strtok(NULL, ",");
+        if (token) sem = atoi(token);
+
+        token = strtok(NULL, ",");
+        if (token) yr = atoi(token);
+
+        token = strtok(NULL, ",");
+        if (token) snprintf(phone, sizeof(phone), "%s", token);
+
+        token = strtok(NULL, ",");
+        if (token) snprintf(email, sizeof(email), "%s", token);
+
+        trim_newline(roll); trim_newline(reg); trim_newline(name);
+        trim_newline(dept); trim_newline(phone); trim_newline(email);
+
+        if (strlen(roll) == 0 || strlen(reg) == 0 || strlen(name) == 0) {
+            skipped++;
+            continue;
+        }
+
+        char esc_roll[MAX_ROLL * 2 + 1], esc_reg[MAX_REG * 2 + 1];
+        char esc_name[MAX_NAME * 2 + 1], esc_dept[MAX_DEPT_NAME * 2 + 1];
+        char esc_phone[MAX_PHONE * 2 + 1], esc_email[MAX_EMAIL * 2 + 1];
+
+        db_escape_string(esc_roll, roll, sizeof(esc_roll));
+        db_escape_string(esc_reg, reg, sizeof(esc_reg));
+        db_escape_string(esc_name, name, sizeof(esc_name));
+        db_escape_string(esc_dept, dept, sizeof(esc_dept));
+        db_escape_string(esc_phone, phone, sizeof(esc_phone));
+        db_escape_string(esc_email, email, sizeof(esc_email));
+
+        char query[MAX_QUERY];
+        snprintf(query, sizeof(query),
+                 "INSERT INTO students (roll_number, registration_number, full_name, "
+                 "department, semester, year, phone, email) "
+                 "VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s', '%s')",
+                 esc_roll, esc_reg, esc_name, esc_dept, sem, yr, esc_phone, esc_email);
+
+        if (db_execute(query)) {
+            imported++;
+        } else {
+            skipped++;
+        }
+    }
+
+    fclose(fp);
+
+    set_console_color(COLOR_GREEN);
+    printf("\n  Import Complete!\n");
+    reset_console_color();
+    printf("  Successfully Imported: %d\n", imported);
+    printf("  Skipped/Failed Records: %d\n", skipped);
+
+    pause_program();
 }

@@ -197,35 +197,30 @@ void report_student_list(void) {
         printf("  Total: %d\n", count);
         reset_console_color();
 
-        if (confirm_dialog("Export to TXT file")) {
-            snprintf(filename, sizeof(filename), "exports/StudentList.txt");
+        if (confirm_dialog("Export to CSV file")) {
+            snprintf(filename, sizeof(filename), "exports/StudentList.csv");
 
             fp = fopen(filename, "w");
             if (fp != NULL) {
-                fprintf(fp, "STUDENT LIST REPORT\n");
-                fprintf(fp, "====================\n\n");
-                fprintf(fp, "%-4s %-12s %-28s %-30s %-4s %-5s %-12s\n",
-                        "ID", "Roll No", "Name", "Department", "Sem", "Year", "Phone");
+                fprintf(fp, "ID,Roll_Number,Name,Department,Semester,Year,Phone,Email\n");
 
-                /* Re-query to write to file */
                 MYSQL_RES *res2 = db_query(
                     "SELECT student_id, roll_number, full_name, department, "
-                    "semester, year, phone FROM students ORDER BY roll_number");
+                    "semester, year, phone, email FROM students ORDER BY roll_number");
 
                 if (res2 != NULL) {
                     MYSQL_ROW r2;
                     while ((r2 = mysql_fetch_row(res2)) != NULL) {
-                        fprintf(fp, "%-4s %-12s %-28s %-30s %-4s %-5s %-12s\n",
-                                r2[0], r2[1], r2[2], r2[3], r2[4], r2[5], r2[6]);
+                        fprintf(fp, "%s,\"%s\",\"%s\",\"%s\",%s,%s,\"%s\",\"%s\"\n",
+                                r2[0], r2[1], r2[2], r2[3], r2[4], r2[5], r2[6], r2[7]);
                     }
                     mysql_free_result(res2);
                 }
 
-                fprintf(fp, "\nTotal: %d\n", count);
                 fclose(fp);
 
                 set_console_color(COLOR_GREEN);
-                printf("\n  Exported to %s\n", filename);
+                printf("\n  Exported successfully to %s\n", filename);
                 reset_console_color();
             }
         }
